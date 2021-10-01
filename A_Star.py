@@ -1,4 +1,5 @@
 import Map
+from scipy.spatial import distance
 
 
 class Node:
@@ -86,7 +87,8 @@ def a_star(start, end, mp):
             Calculate g,h and f for our node
             """
             new_node.g = current.g + value
-            new_node.h = (position[0] - end_node.pos[0]) ** 2 + (position[1] - end_node.pos[1]) ** 2
+            """new_node.h = (position[0] - end_node.pos[0]) ** 2 + (position[1] - end_node.pos[1]) ** 2"""
+            new_node.h = (abs(distance.euclidean(position, end_node.pos)))
             new_node.f = new_node.g + new_node.h
 
             """
@@ -113,6 +115,7 @@ Loop through all maps
 mp = Map.Map_Obj(3)
 mp.show_map()
 for i in range(1, 6):
+    print(i)
     floor = Map.Map_Obj(i)
     st, en, e, path = floor.fill_critical_positions(i)
     finish = a_star(st, en, floor).parent
