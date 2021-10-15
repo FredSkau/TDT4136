@@ -17,6 +17,7 @@ from game import Directions
 import random, util
 
 from game import Agent
+import math
 
 class ReflexAgent(Agent):
     """
@@ -135,7 +136,36 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.maxValue(gameState, 0, 0)[0]
+
+    def minimaxDecision(self, gameState, agentIndex, depth):
+        #Return the gamestate if game is won/lost or depth is reached
+        if gameState.isLose() or gameState.isWin or depth == self.depth:
+            return self.evaluationFunction(gameState)
+
+        #If agentIndex is 0, maximize for pacman, else minimize for ghosts
+        if agentIndex is 0:
+            return self.maxValue(gameState, agentIndex, depth)
+        else:
+            return self.minValue(gameState, agentIndex, depth)
+
+    def maxValue(self, gameState, agentIndex, depth):
+        v = ('action', -math.inf)
+        for a in gameState.getLegalActions(agentIndex):
+            v = max(v, (a, self.minimaxDecision(
+                gameState.generateSuccessor(agentIndex, a), 
+                (0 if agentIndex + 1 == gameState.getNumAgents() else agentIndex + 1), 
+                depth + 1)),key=lambda x:x[1])
+        return v
+
+    def minValue(self, gameState, agentIndex, depth):        
+        v = ('action', math.inf)
+        for a in gameState.getLegalActions(agentIndex):
+            v = min(v, (a, self.minimaxDecision(
+                gameState.generateSuccessor(agentIndex, a), 
+                (0 if agentIndex + 1 == gameState.getNumAgents() else agentIndex + 1), 
+                depth + 1)),key=lambda x:x[1])
+        return v
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
