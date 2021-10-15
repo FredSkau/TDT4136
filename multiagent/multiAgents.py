@@ -17,6 +17,7 @@ from game import Directions
 import random, util
 
 from game import Agent
+import math
 
 class ReflexAgent(Agent):
     """
@@ -135,7 +136,41 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.maxValue(gameState, 0, 0)[0]
+
+    def minimaxDecision(self, gameState, agentIndex, depth):
+        #Return the gamestate if game is won/lost or depth is reached
+        if gameState.isLose() or gameState.isWin() or depth == self.depth * gameState.getNumAgents():
+            return self.evaluationFunction(gameState)
+
+        #If agentIndex is 0, maximize for pacman, else minimize for ghosts
+        if agentIndex is 0:
+            return self.maxValue(gameState, agentIndex, depth)[1]
+        else:
+            return self.minValue(gameState, agentIndex, depth)[1]
+
+    def maxValue(self, gameState, agentIndex, depth):
+        v = ('action', -math.inf)
+        actionList = []
+        actionList.append(v)
+        for a in gameState.getLegalActions(agentIndex):
+            actionList.append((a, self.minimaxDecision(
+                gameState.generateSuccessor(agentIndex, a), 
+                (0 if agentIndex + 1 == gameState.getNumAgents() else agentIndex + 1), 
+                depth + 1)))
+            print(actionList)
+        return max(actionList, key=lambda x:x[1])
+
+    def minValue(self, gameState, agentIndex, depth):        
+        v = ('action', math.inf)
+        actionList = []
+        actionList.append(v)
+        for a in gameState.getLegalActions(agentIndex):
+            actionList.append((a, self.minimaxDecision(
+                gameState.generateSuccessor(agentIndex, a), 
+                (0 if agentIndex + 1 == gameState.getNumAgents() else agentIndex + 1), 
+                depth + 1)))
+        return min(actionList, key=lambda x:x[1])
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
