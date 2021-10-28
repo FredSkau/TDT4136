@@ -111,26 +111,39 @@ class CSP:
         assignments and inferences that took place in previous
         iterations of the loop.
         """
-        # TODO: IMPLEMENT THIS
 
+        '''
+        Increment CSP calls variable each time backtrack is called.
+        Return the assignment if all values have been decided
+        '''
         self.calls += 1
         if sum(len(values) for values in assignment.values()) == len(assignment):
             return assignment
-        
+
+        '''
+        Gets an unassigned value
+        '''
         var = self.select_unassigned_variable(assignment)
-        
+
+        '''
+        Takes a deepcopy for each loop iteration to ensure changes made to the assignment won't 
+        affect anything outside of the loop.
+        Function calls itself recursively to find a result. This result is returned as an assignment(above) if found
+        '''
         for value in assignment[var]:
             assignment_copy = copy.deepcopy(assignment)
             if value in assignment_copy[var]:
                 assignment_copy[var] = [value]
                 if self.inference(assignment_copy, self.get_all_neighboring_arcs(var)):
                     result = self.backtrack(assignment_copy)
-                    if result != None:
+                    if result is not None:
                         return result
-        
+
+        '''
+        Increment failures if the function could not return an answer
+        '''
         self.failures += 1
         return
-            
 
     def select_unassigned_variable(self, assignment):
         """The function 'Select-Unassigned-Variable' from the pseudocode
@@ -138,10 +151,11 @@ class CSP:
         in 'assignment' that have not yet been decided, i.e. whose list
         of legal values has a length greater than one.
         """
-        # TODO: IMPLEMENT THIS
-        
+
+        '''
+        Returns a new unassigned variable key, or None if all values are assigned.
+        '''
         return next((key for key in assignment.keys() if len(assignment[key]) > 1), None)
-        
 
     def inference(self, assignment, queue):
         """The function 'AC-3' from the pseudocode in the textbook.
@@ -149,10 +163,13 @@ class CSP:
         the lists of legal values for each undecided variable. 'queue'
         is the initial queue of arcs that should be visited.
         """
-        # TODO: IMPLEMENT THIS
 
+        '''
+        If a variable has an empty domain, it indicates that the CSP cannot be solved, and False is returned.
+        If this is not the case, True is returned
+        '''
         while queue:
-            (i,j) = queue.pop(0)
+            (i, j) = queue.pop(0)
             if self.revise(assignment, i, j):
                 if len(assignment[i]) == 0:
                     return False
@@ -160,7 +177,6 @@ class CSP:
                     if neighbor[0] != j:
                         queue.append(neighbor)
         return True
-                
 
     def revise(self, assignment, i, j):
         """The function 'Revise' from the pseudocode in the textbook.
@@ -171,15 +187,17 @@ class CSP:
         between i and j, the value should be deleted from i's list of
         legal values in 'assignment'.
         """
-        # TODO: IMPLEMENT THIS
-        revised = False
 
+        '''
+        Returns true if no value can satisfy the constraints between i and j.
+        Returns false otherwise
+        '''
         for x in assignment[i]:
             if not next((pair for pair in self.get_all_possible_pairs(x, assignment[j]) if pair in self.constraints[i][j]), False):
                 assignment[i].remove(x)
-                revised = True
+                return True
         
-        return revised
+        return False
 
 
 def create_map_coloring_csp():
