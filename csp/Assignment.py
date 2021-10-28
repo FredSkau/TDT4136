@@ -1,7 +1,6 @@
 import copy
 import itertools
 
-
 class CSP:
     def __init__(self):
         # self.variables is a list of the variable names in the CSP
@@ -13,6 +12,10 @@ class CSP:
         # self.constraints[i][j] is a list of legal value pairs for
         # the variable pair (i, j)
         self.constraints = {}
+
+        self.name = ''
+        self.calls = 0
+        self.failures = 0
 
     def add_variable(self, name, domain):
         """Add a new variable to the CSP. 'name' is the variable name
@@ -57,7 +60,7 @@ class CSP:
 
         # Next, filter this list of value pairs through the function
         # 'filter_function', so that only the legal value pairs remain
-        self.constraints[i][j] = list(filter(lambda value_pair: filter_function(*value_pair), self.constraints[i][j]))
+        self.constraints[i][j] = filter(lambda value_pair: filter_function(*value_pair), self.constraints[i][j])
 
     def add_all_different_constraint(self, variables):
         """Add an Alldiff constraint between all of the variables in the
@@ -109,7 +112,25 @@ class CSP:
         iterations of the loop.
         """
         # TODO: IMPLEMENT THIS
-        pass
+
+        self.calls += 1
+        if sum(len(values) for values in assignment.values()) == len(assignment):
+            return assignment
+        
+        var = self.select_unassigned_variable(assignment)
+        
+        for value in assignment[var]:
+            assignment_copy = copy.deepcopy(assignment)
+            if value in assignment_copy[var]:
+                assignment_copy[var] = [value]
+                if self.inference(assignment_copy, self.get_all_neighboring_arcs(var)):
+                    result = self.backtrack(assignment_copy)
+                    if result != None:
+                        return result
+        
+        self.failures += 1
+        return
+            
 
     def select_unassigned_variable(self, assignment):
         """The function 'Select-Unassigned-Variable' from the pseudocode
@@ -118,7 +139,9 @@ class CSP:
         of legal values has a length greater than one.
         """
         # TODO: IMPLEMENT THIS
-        pass
+        
+        return next((key for key in assignment.keys() if len(assignment[key]) > 1), None)
+        
 
     def inference(self, assignment, queue):
         """The function 'AC-3' from the pseudocode in the textbook.
@@ -127,7 +150,17 @@ class CSP:
         is the initial queue of arcs that should be visited.
         """
         # TODO: IMPLEMENT THIS
-        pass
+
+        while queue:
+            (i,j) = queue.pop(0)
+            if self.revise(assignment, i, j):
+                if len(assignment[i]) == 0:
+                    return False
+                for neighbor in self.get_all_neighboring_arcs(i):
+                    if neighbor[0] != j:
+                        queue.append(neighbor)
+        return True
+                
 
     def revise(self, assignment, i, j):
         """The function 'Revise' from the pseudocode in the textbook.
@@ -139,7 +172,14 @@ class CSP:
         legal values in 'assignment'.
         """
         # TODO: IMPLEMENT THIS
-        pass
+        revised = False
+
+        for x in assignment[i]:
+            if not next((pair for pair in self.get_all_possible_pairs(x, assignment[j]) if pair in self.constraints[i][j]), False):
+                assignment[i].remove(x)
+                revised = True
+        
+        return revised
 
 
 def create_map_coloring_csp():
@@ -157,6 +197,10 @@ def create_map_coloring_csp():
         for other_state in other_states:
             csp.add_constraint_one_way(state, other_state, lambda i, j: i != j)
             csp.add_constraint_one_way(other_state, state, lambda i, j: i != j)
+
+    for constraint in csp.constraints:
+        for entry in csp.constraints[constraint]:
+            csp.constraints[constraint][entry] = list(csp.constraints[constraint][entry])
     return csp
 
 
@@ -186,6 +230,10 @@ def create_sudoku_csp(filename):
                     cells.append('%d-%d' % (row, col))
             csp.add_all_different_constraint(cells)
 
+    for constraint in csp.constraints:
+        for entry in csp.constraints[constraint]:
+            csp.constraints[constraint][entry] = list(csp.constraints[constraint][entry])
+    csp.name = filename
     return csp
 
 
@@ -202,3 +250,19 @@ def print_sudoku_solution(solution):
         print("")
         if row == 2 or row == 5:
             print('------+-------+------')
+
+def print_output(board):
+    print(board.name)
+    print_sudoku_solution(board.backtracking_search())
+    print('calls: ' + str(board.calls))
+    print('failures: ' + str(board.failures))
+    print('\n')
+
+def main():
+
+    print_output(create_sudoku_csp('easy.txt'))
+    print_output(create_sudoku_csp('medium.txt'))
+    print_output(create_sudoku_csp('hard.txt'))
+    print_output(create_sudoku_csp('veryhard.txt'))
+
+main()
